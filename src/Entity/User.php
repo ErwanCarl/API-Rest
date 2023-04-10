@@ -2,15 +2,19 @@
 
 namespace App\Entity;
 
-use App\Repository\UserRepository;
-use Doctrine\Common\Collections\ArrayCollection;
-use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
-use Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface;
+use App\Repository\UserRepository;
+use Doctrine\Common\Collections\Collection;
+use Doctrine\Common\Collections\ArrayCollection;
 use Symfony\Component\Security\Core\User\UserInterface;
+use Symfony\Bridge\Doctrine\Validator\Constraints\UniqueEntity;
+use Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface;
+use Symfony\Component\Validator\Constraints as Assert;
 
 #[ORM\Entity(repositoryClass: UserRepository::class)]
 #[ORM\Table(name: '`user`')]
+#[UniqueEntity('label', message : 'Le libellé de la Market Place est déjà existant.')]
+#[UniqueEntity('email', message : 'L\'email est déjà utilisé par une autre Market Place.')]
 class User implements UserInterface, PasswordAuthenticatedUserInterface
 {
     #[ORM\Id]
@@ -19,12 +23,17 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     private ?int $id = null;
 
     #[ORM\Column(length: 50, unique: true)]
+    #[Assert\NotBlank(message: "Le libellé de la Market Place est obligatoire.")]
+    #[Assert\Length(min: 2, max: 50, minMessage: "Le libellé de la Market Place doit faire au moins {{ limit }} caractères.", maxMessage: "Le libellé de la Market Place ne peut pas faire plus de {{ limit }} caractères.")]
     private ?string $label = null;
 
     #[ORM\Column(length: 255, unique: true)]
+    #[Assert\NotBlank(message: 'Le mail doit être renseigné.')]
+    #[Assert\Email(message: 'Le format de l\'email n\'est pas valide.',)]
+    #[Assert\Length(max: 255, maxMessage: "L'email ne peut pas faire plus de {{ limit }} caractères.")]
     private ?string $email = null;
 
-    #[ORM\Column]
+    #[ORM\Column(type: 'json')]
     private array $roles = [];
 
     /**
@@ -33,7 +42,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\Column(length: 255)]
     private ?string $password = null;
 
-    #[ORM\OneToMany(mappedBy: 'marketplace', targetEntity: Customer::class, orphanRemoval: true)]
+    #[ORM\OneToMany(mappedBy: 'marketplace', targetEntity: Customer::class, orphanRemoval: true, cascade:["persist", "remove"])]
     private Collection $customers;
 
     public function __construct()
@@ -69,7 +78,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     }
 
     /**
-     * Méthode getUsername qui permet de retourner le champ qui est utilisé pour l'authentification. Utile pour JWT.
+     * getUsername method to return the property used for authentication. Useful for JWT.
      *
      * @return string
      */
