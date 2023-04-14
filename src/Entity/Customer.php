@@ -2,10 +2,13 @@
 
 namespace App\Entity;
 
-use App\Repository\CustomerRepository;
 use Doctrine\ORM\Mapping as ORM;
+use App\Repository\CustomerRepository;
+use Symfony\Component\Validator\Constraints as Assert;
+use Symfony\Bridge\Doctrine\Validator\Constraints\UniqueEntity;
 
 #[ORM\Entity(repositoryClass: CustomerRepository::class)]
+#[UniqueEntity('email', message : 'L\'email est déjà utilisé par un autre client.')]
 class Customer
 {
     #[ORM\Id]
@@ -14,23 +17,36 @@ class Customer
     private ?int $id = null;
 
     #[ORM\Column(length: 50)]
+    #[Assert\NotBlank(message: "Le nom de l'utilisateur est obligatoire.")]
+    #[Assert\Length(min: 2, max: 50, minMessage: "Le nom de l'utilisateur doit faire au moins {{ limit }} caractères.", maxMessage: "Le nom de l'utilisateur ne peut pas faire plus de {{ limit }} caractères.")]
+    #[Assert\Regex(
+        pattern: "/^([a-zA-Z']{2,50})$/",
+        message: 'Le nom doit seulement contenir des lettres.'
+    )]
     private ?string $name = null;
 
     #[ORM\Column(length: 50)]
+    #[Assert\NotBlank(message: "Le prénom de l'utilisateur est obligatoire.")]
+    #[Assert\Length(min: 2, max: 50, minMessage: "Le prénom de l'utilisateur doit faire au moins {{ limit }} caractères.", maxMessage: "Le prénom de l'utilisateur ne peut pas faire plus de {{ limit }} caractères.")]
+    #[Assert\Regex(
+        pattern: "/^([a-zA-Z']{2,50})$/",
+        message: 'Le prénom doit seulement contenir des lettres.'
+    )]
     private ?string $nickname = null;
 
-    #[ORM\Column(length: 255)]
+    #[ORM\Column(length: 255, unique: true)]
+    #[Assert\NotBlank(message: 'Le mail doit être renseigné.')]
+    #[Assert\Email(message: 'Le format de l\'email n\'est pas valide.',)]
+    #[Assert\Length(max: 255, maxMessage: "L'email ne peut pas faire plus de {{ limit }} caractères.")]
     private ?string $email = null;
-
-    #[ORM\Column]
-    private ?bool $isVerified = null;
-
-    #[ORM\Column(length: 255, nullable: true)]
-    private ?string $accountKey = null;
 
     #[ORM\ManyToOne(inversedBy: 'customers')]
     #[ORM\JoinColumn(nullable: false)]
     private ?User $marketplace = null;
+
+    #[ORM\Column(length: 255, nullable: true)]
+    #[Assert\Length(max: 255, maxMessage: "L'adresse ne peut pas faire plus de {{ limit }} caractères.")]
+    private ?string $adress = null;
 
     public function getId(): ?int
     {
@@ -73,30 +89,6 @@ class Customer
         return $this;
     }
 
-    public function isIsVerified(): ?bool
-    {
-        return $this->isVerified;
-    }
-
-    public function setIsVerified(bool $isVerified): self
-    {
-        $this->isVerified = $isVerified;
-
-        return $this;
-    }
-
-    public function getAccountKey(): ?string
-    {
-        return $this->accountKey;
-    }
-
-    public function setAccountKey(?string $accountKey): self
-    {
-        $this->accountKey = $accountKey;
-
-        return $this;
-    }
-
     public function getMarketplace(): ?User
     {
         return $this->marketplace;
@@ -105,6 +97,18 @@ class Customer
     public function setMarketplace(?User $marketplace): self
     {
         $this->marketplace = $marketplace;
+
+        return $this;
+    }
+
+    public function getAdress(): ?string
+    {
+        return $this->adress;
+    }
+
+    public function setAdress(?string $adress): self
+    {
+        $this->adress = $adress;
 
         return $this;
     }

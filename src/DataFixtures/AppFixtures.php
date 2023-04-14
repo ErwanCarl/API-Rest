@@ -182,8 +182,7 @@ class AppFixtures extends Fixture
             $customers[$i]->setName($faker->unique()->lastname);
             $customers[$i]->setNickname($faker->unique()->firstname);
             $customers[$i]->setEmail($faker->unique()->email);
-            $customers[$i]->setIsVerified(array_rand([0,1], 1));
-            $customers[$i]->setAccountKey(null);
+            $customers[$i]->setAdress($faker->address);
             $randomUser = array_rand($users, 1);
             $customers[$i]->setMarketplace($users[$randomUser]);
 
