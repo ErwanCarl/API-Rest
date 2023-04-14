@@ -12,13 +12,15 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\HttpFoundation\JsonResponse;
-use Symfony\Component\HttpKernel\Attribute\ParamConverter;
+use Symfony\Bridge\Doctrine\Attribute\MapEntity;
+use Symfony\Component\Validator\Validator\ValidatorInterface;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 
+#[Route('/api/users')]
 class CustomerController extends AbstractController
 {
-    #[Route('/api/users/{id}/customers', name: 'customers_list', methods: ['GET'])]
+    #[Route('/{id}/customers', name: 'customers_list', methods: ['GET'])]
     public function getCustomersList(User $user, CustomerRepository $customerRepository, SerializerInterface $serializer): JsonResponse
     {
         $customersList = $customerRepository->findUserCustomers($user);
@@ -29,32 +31,40 @@ class CustomerController extends AbstractController
         return new JsonResponse($jsonCustomersList, Response::HTTP_OK, [], true);
     }
 
-    #[Route('/api/users/{id}/customers/{customer_id}', name: 'customer_details', methods: ['GET'])] 
-    // #[ParamConverter('user', options: ['mapping' => ['id' => 'id']])]
-    public function getCustomerDetails(User $user, int $customer_id, CustomerRepository $customerRepository, SerializerInterface $serializer): JsonResponse
+    #[Route('/{id}/customers/{customer_id}', name: 'customer_details', methods: ['GET'])] 
+    public function getCustomerDetails(#[MapEntity(id: 'id')] User $user, #[MapEntity(id: 'customer_id')] Customer $customer, SerializerInterface $serializer): JsonResponse
     {
-        $customerDetails = $customerRepository->findUserCustomerDetails($user, $customer_id);
-        
+        // $customerDetails = $customerRepository->findUserCustomerDetails($user, $customer_id);
+
         $context = (new SerializationContext())->setGroups(['getCustomerDetails']);
-        $jsonCustomerDetails = $serializer->serialize($customerDetails, 'json', $context);
+        $jsonCustomerDetails = $serializer->serialize($customer, 'json', $context);
 
         return new JsonResponse($jsonCustomerDetails, Response::HTTP_OK, [], true);
     }
 
-    #[Route('/api/users/{id}/customers/{customer_id}', name: 'delete_customer', methods: ['DELETE'])]
-    public function deleteCustomer(User $user, int $customer_id, CustomerRepository $customerRepository): JsonResponse
+    #[Route('/{id}/customers/{customer_id}', name: 'delete_customer', methods: ['DELETE'])]
+    public function deleteCustomer(#[MapEntity(id: 'id')] User $user, #[MapEntity(id: 'customer_id')] Customer $customer, CustomerRepository $customerRepository): JsonResponse
     {
-        $customerToDelete = $customerRepository->findUserCustomerDetails($user, $customer_id);
-        $customerRepository->remove($customerToDelete, true);
+        // $customerToDelete = $customerRepository->findUserCustomerDetails($user, $customer_id);
+        
+        $customerRepository->remove($customer, true);
 
         return new JsonResponse(null, Response::HTTP_NO_CONTENT);
     }
 
-    #[Route('/api/users/{id}/customers', name: 'create_customer', methods: ['POST'])]
-    public function createCustomer(User $user, Request $request, CustomerRepository $customerRepository, SerializerInterface $serializer, UrlGeneratorInterface $urlGenerator): JsonResponse
+    #[Route('/{id}/customers', name: 'create_customer', methods: ['POST'])]
+    public function createCustomer(User $user, Request $request, CustomerRepository $customerRepository, SerializerInterface $serializer, UrlGeneratorInterface $urlGenerator, ValidatorInterface $validator): JsonResponse
     {
         $customer = $serializer->deserialize($request->getContent(), Customer::class, 'json');
         $customer->setMarketPlace($user);
+
+        // We check the customer datas
+        $errors = $validator->validate($customer);
+
+        if ($errors->count() > 0) {
+            return new JsonResponse($serializer->serialize($errors, 'json'), JsonResponse::HTTP_BAD_REQUEST, [], true);
+        }
+
         $customerRepository->save($customer, true);
         
         $context = (new SerializationContext())->setGroups(['getCustomerDetails']);
@@ -65,21 +75,28 @@ class CustomerController extends AbstractController
         return new JsonResponse($jsonCustomer, Response::HTTP_CREATED, ["Location" => $location], true);
     }
 
-    // #[Route('/api/users/{id}/customers/{customer_id}', name: 'update_customer', methods: ['PUT'])] 
-    // public function updateCustomer(User $user, int $customer_id, Request $request, CustomerRepository $customerRepository, SerializerInterface $serializer, UrlGeneratorInterface $urlGenerator): JsonResponse
-    // {
-    //     $currentCustomer = $customerRepository->findUserCustomerDetails($user, $customer_id);
+    #[Route('/{id}/customers/{customer_id}', name: 'update_customer', methods: ['PUT'])] 
+    public function updateCustomer(#[MapEntity(id: 'id')] User $user, #[MapEntity(id: 'customer_id')] Customer $currentCustomer, Request $request, CustomerRepository $customerRepository, SerializerInterface $serializer, UrlGeneratorInterface $urlGenerator, ValidatorInterface $validator): JsonResponse
+    {
+        // $currentCustomer = $customerRepository->findUserCustomerDetails($user, $customer_id);
 
-    //     $context = (DeserializationContext::create())->setAttribute(AbstractNormalizer::OBJECT_TO_POPULATE, $currentCustomer);
-    //     $updatedCustomer = $serializer->deserialize($request->getContent(), Customer::class, 'json', $context);
+        // $contextDes = (DeserializationContext::create())->setAttribute(AbstractNormalizer::OBJECT_TO_POPULATE, $currentCustomer);
+        $updatedCustomer = $serializer->deserialize($request->getContent(), Customer::class, 'json');
+        $updatedCustomer->setMarketplace($user);
 
-    //     $customerRepository->save($updatedCustomer, true);
+        // We check the customer datas
+        $errors = $validator->validate($updatedCustomer);
+
+        if ($errors->count() > 0) {
+            return new JsonResponse($serializer->serialize($errors, 'json'), JsonResponse::HTTP_BAD_REQUEST, [], true);
+        }
+        $customerRepository->save($updatedCustomer, true);
         
-    //     $context = (new SerializationContext())->setGroups(['getCustomerDetails']);
-    //     $jsonUpdatedCustomer = $serializer->serialize($updatedCustomer, 'json', $context);
+        $context = (new SerializationContext())->setGroups(['getCustomerDetails']);
+        $jsonUpdatedCustomer = $serializer->serialize($updatedCustomer, 'json', $context);
 
-    //     $location = $urlGenerator->generate('customer_details', ['id' => $updatedCustomer->getMarketplace()->getId(), 'customer_id' => $updatedCustomer->getId()], UrlGeneratorInterface::ABSOLUTE_URL);
+        $location = $urlGenerator->generate('customer_details', ['id' => $updatedCustomer->getMarketplace()->getId(), 'customer_id' => $updatedCustomer->getId()], UrlGeneratorInterface::ABSOLUTE_URL);
 
-    //     return new JsonResponse($jsonUpdatedCustomer, Response::HTTP_NO_CONTENT, ["Location" => $location], true);
-    // }
+        return new JsonResponse($jsonUpdatedCustomer, Response::HTTP_NO_CONTENT, ["Location" => $location], true);
+    }
 }
