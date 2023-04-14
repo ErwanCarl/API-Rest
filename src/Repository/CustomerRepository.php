@@ -2,9 +2,10 @@
 
 namespace App\Repository;
 
+use App\Entity\User;
 use App\Entity\Customer;
-use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
+use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 
 /**
  * @extends ServiceEntityRepository<Customer>
@@ -37,6 +38,28 @@ class CustomerRepository extends ServiceEntityRepository
         if ($flush) {
             $this->getEntityManager()->flush();
         }
+    }
+
+    public function findUserCustomers(User $user) : ?array 
+    {
+        return $this->createQueryBuilder('c')
+            ->andWhere('c.marketplace = :user')
+            ->setParameter('user', $user)
+            ->orderBy('c.id','ASC')
+            ->getQuery()
+            ->getArrayResult();
+    }
+
+    public function findUserCustomerDetails(User $user, int $id) : ?Customer 
+    {
+        return $this->createQueryBuilder('m')
+            ->andWhere('m.marketplace = :user')
+            ->andWhere('m.id = :id')
+            ->setParameter('user', $user)
+            ->setParameter('id', $id)
+            ->orderBy('m.id','ASC')
+            ->getQuery()
+            ->getSingleResult();
     }
 
 //    /**
