@@ -2,15 +2,14 @@
 
 namespace App\EventSubscriber;
 
-use Doctrine\ORM\EntityNotFoundException;
 use Symfony\Component\HttpKernel\KernelEvents;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpKernel\Event\ExceptionEvent;
 use Symfony\Component\HttpKernel\Exception\HttpException;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
-use Symfony\Component\HttpKernel\Exception\HttpExceptionInterface;
 use Symfony\Component\Routing\Exception\ResourceNotFoundException;
+use Symfony\Component\Security\Core\Exception\AuthenticationException;
 
 class ExceptionSubscriber implements EventSubscriberInterface
 {
@@ -31,6 +30,20 @@ class ExceptionSubscriber implements EventSubscriberInterface
                 'message' => 'L\'url entrée est erronée, la route n\'existe pas.'
             ];
             $event->setResponse(new JsonResponse($data));
+
+        } elseif ($exception instanceof AuthenticationException) {
+            $data = [
+                'status' => 401,
+                'message' => 'L\'authentification a échouée, veuillez récupérer votre token et l\'utiliser pour vous authentifier.'
+            ];
+            $event->setResponse(new JsonResponse($data));
+
+        // } elseif ($exception instanceof AccessDeniedHttpException) {
+        //     $data = [
+        //         'status' => 403,
+        //         'message' => 'Vous n\'avez pas les droits d\'accès à ce client, il n\'est pas un de vos clients, veuillez vérifier l\'url entrée ainsi que l\'identifiant demandé.'
+        //     ];
+        //     $event->setResponse(new JsonResponse($data));
 
         } elseif ($exception instanceof HttpException) {
             $data = [
