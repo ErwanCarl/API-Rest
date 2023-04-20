@@ -135,8 +135,7 @@ class AppFixtures extends Fixture
                 'brand' => 'Infinix',
                 'price' => '910.00',
                 'os' => 'Android 12, XOS 12',
-                'cpu' => 'Octa-core (2x2.6 GHz Cortex-A78 & 6x2.0 GHz Cortex-A55)
-                Octa-core (2x2.5 GHz Cortex-A78 & 6x2.0 GHz Cortex-A55) - X6815D',
+                'cpu' => 'Octa-core (2x2.6 GHz Cortex-A78 & 6x2.0 GHz Cortex-A55) Octa-core (2x2.5 GHz Cortex-A78 & 6x2.0 GHz Cortex-A55) - X6815D',
                 'screen' => '6.78" pouces, 1080 x 2460, IPS LCD',
                 'isAvailable' => true
             ]
