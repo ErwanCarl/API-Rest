@@ -29,7 +29,7 @@ class Customer
     private ?int $id = null;
 
     #[ORM\Column(length: 50)]
-    #[Assert\NotBlank(message: "Le nom de l'utilisateur est obligatoire.")]
+    #[Assert\NotBlank(message: "Le nom du client est obligatoire.")]
     #[Assert\Length(min: 2, max: 50, minMessage: "Le nom de l'utilisateur doit faire au moins {{ limit }} caractères.", maxMessage: "Le nom de l'utilisateur ne peut pas faire plus de {{ limit }} caractères.")]
     #[Assert\Regex(
         pattern: "/^([a-zA-Z']{2,50})$/",
@@ -39,7 +39,7 @@ class Customer
     private ?string $name = null;
 
     #[ORM\Column(length: 50)]
-    #[Assert\NotBlank(message: "Le prénom de l'utilisateur est obligatoire.")]
+    #[Assert\NotBlank(message: "Le prénom du client est obligatoire.")]
     #[Assert\Length(min: 2, max: 50, minMessage: "Le prénom de l'utilisateur doit faire au moins {{ limit }} caractères.", maxMessage: "Le prénom de l'utilisateur ne peut pas faire plus de {{ limit }} caractères.")]
     #[Assert\Regex(
         pattern: "/^([a-zA-Z']{2,50})$/",
@@ -48,7 +48,7 @@ class Customer
     #[Groups(["getCustomers", "getCustomerDetails"])]
     private ?string $nickname = null;
 
-    #[ORM\Column(length: 255, unique: true)]
+    #[ORM\Column(length: 255)]
     #[Assert\NotBlank(message: 'Le mail doit être renseigné.')]
     #[Assert\Email(message: 'Le format de l\'email n\'est pas valide.',)]
     #[Assert\Length(max: 255, maxMessage: "L'email ne peut pas faire plus de {{ limit }} caractères.")]
@@ -63,6 +63,16 @@ class Customer
     #[Assert\Length(max: 255, maxMessage: "L'adresse ne peut pas faire plus de {{ limit }} caractères.")]
     #[Groups(["getCustomers", "getCustomerDetails"])]
     private ?string $adress = null;
+
+    public function update(?Customer $updateCustomer): self
+    {
+        $this->name = $updateCustomer->getName();
+        $this->nickname = $updateCustomer->getNickname();
+        $this->email = $updateCustomer->getEmail();
+        $this->adress = $updateCustomer->getAdress();
+
+        return $this;
+    }
 
     public function getId(): ?int
     {
