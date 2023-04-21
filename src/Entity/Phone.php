@@ -6,7 +6,18 @@ use App\Repository\PhoneRepository;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Validator\Constraints as Assert;
 use Symfony\Bridge\Doctrine\Validator\Constraints\UniqueEntity;
+use Hateoas\Configuration\Annotation as Hateoas;
 
+/**
+ * @Hateoas\Relation(
+ *      "self",
+ *      href = @Hateoas\Route(
+ *          "phone_details",
+ *          parameters = { "id" = "expr(object.getId())" }
+ *      )
+ * )
+ *
+ */
 #[ORM\Entity(repositoryClass: PhoneRepository::class)]
 #[UniqueEntity('label', message : 'Le modèle de téléphone est déjà existant.')]
 class Phone

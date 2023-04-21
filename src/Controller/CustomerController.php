@@ -2,7 +2,6 @@
 
 namespace App\Controller;
 
-use App\Entity\User;
 use App\Entity\Customer;
 use App\Repository\CustomerRepository;
 use JMS\Serializer\SerializerInterface;
@@ -36,7 +35,7 @@ class CustomerController extends AbstractController
             $item->tag("customersCache");
 
             $customersList = $customerRepository->findUserCustomers($user);
-            $context = (new SerializationContext())->setGroups(['getCustomers']);
+            $context = (new SerializationContext())->setGroups(['getCustomerDetails']);
             return $serializer->serialize($customersList, 'json', $context);
         });
 

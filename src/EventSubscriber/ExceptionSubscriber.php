@@ -31,20 +31,6 @@ class ExceptionSubscriber implements EventSubscriberInterface
             ];
             $event->setResponse(new JsonResponse($data));
 
-        } elseif ($exception instanceof AuthenticationException) {
-            $data = [
-                'status' => 401,
-                'message' => 'L\'authentification a échouée, veuillez récupérer votre token et l\'utiliser pour vous authentifier.'
-            ];
-            $event->setResponse(new JsonResponse($data));
-
-        // } elseif ($exception instanceof AccessDeniedHttpException) {
-        //     $data = [
-        //         'status' => 403,
-        //         'message' => 'Vous n\'avez pas les droits d\'accès à ce client, il n\'est pas un de vos clients, veuillez vérifier l\'url entrée ainsi que l\'identifiant demandé.'
-        //     ];
-        //     $event->setResponse(new JsonResponse($data));
-
         } elseif ($exception instanceof HttpException) {
             $data = [
                 'status' => $exception->getStatusCode(),

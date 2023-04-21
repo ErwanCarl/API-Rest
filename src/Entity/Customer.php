@@ -9,7 +9,37 @@ use JMS\Serializer\Annotation\Groups;
 use App\Repository\CustomerRepository;
 use Symfony\Component\Validator\Constraints as Assert;
 use Symfony\Bridge\Doctrine\Validator\Constraints\UniqueEntity;
+use Hateoas\Configuration\Annotation as Hateoas;
 
+/**
+ * @Hateoas\Relation(
+ *      "self",
+ *      href = @Hateoas\Route(
+ *          "customer_details",
+ *          parameters = { "customer_id" = "expr(object.getId())" }
+ *      ),
+ *      exclusion = @Hateoas\Exclusion(groups="getCustomerDetails")
+ * )
+ *
+ * @Hateoas\Relation(
+ *      "delete",
+ *      href = @Hateoas\Route(
+ *          "delete_customer",
+ *          parameters = { "customer_id" = "expr(object.getId())" },
+ *      ),
+ *      exclusion = @Hateoas\Exclusion(groups="getCustomerDetails", excludeIf = "expr(not is_granted('ROLE_ADMIN'))")
+ * )
+ *
+ * @Hateoas\Relation(
+ *      "update",
+ *      href = @Hateoas\Route(
+ *          "update_customer",
+ *          parameters = { "customer_id" = "expr(object.getId())" },
+ *      ),
+ *      exclusion = @Hateoas\Exclusion(groups="getCustomerDetails", excludeIf = "expr(not is_granted('ROLE_ADMIN'))")
+ * )
+ *
+ */
 #[ORM\Entity(repositoryClass: CustomerRepository::class)]
 #[UniqueEntity(fields: ["email", "marketplace"], message : 'L\'email est déjà utilisé par un autre client.')]
 // #[ORM\Table(
@@ -25,7 +55,7 @@ class Customer
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
-    #[Groups(["getCustomers", "getCustomerDetails"])]
+    #[Groups(["getCustomerDetails"])]
     private ?int $id = null;
 
     #[ORM\Column(length: 50)]
@@ -35,7 +65,7 @@ class Customer
         pattern: "/^([a-zA-Z']{2,50})$/",
         message: 'Le nom doit seulement contenir des lettres.'
     )]
-    #[Groups(["getCustomers", "getCustomerDetails"])]
+    #[Groups(["getCustomerDetails"])]
     private ?string $name = null;
 
     #[ORM\Column(length: 50)]
@@ -45,23 +75,24 @@ class Customer
         pattern: "/^([a-zA-Z']{2,50})$/",
         message: 'Le prénom doit seulement contenir des lettres.'
     )]
-    #[Groups(["getCustomers", "getCustomerDetails"])]
+    #[Groups(["getCustomerDetails"])]
     private ?string $nickname = null;
 
     #[ORM\Column(length: 255)]
     #[Assert\NotBlank(message: 'Le mail doit être renseigné.')]
     #[Assert\Email(message: 'Le format de l\'email n\'est pas valide.',)]
     #[Assert\Length(max: 255, maxMessage: "L'email ne peut pas faire plus de {{ limit }} caractères.")]
-    #[Groups(["getCustomers", "getCustomerDetails"])]
+    #[Groups(["getCustomerDetails"])]
     private ?string $email = null;
 
     #[ORM\ManyToOne(inversedBy: 'customers')]
     #[ORM\JoinColumn(nullable: false)]
+    #[Groups(["getCustomerDetails"])]
     private ?User $marketplace = null;
 
     #[ORM\Column(length: 255, nullable: true)]
     #[Assert\Length(max: 255, maxMessage: "L'adresse ne peut pas faire plus de {{ limit }} caractères.")]
-    #[Groups(["getCustomers", "getCustomerDetails"])]
+    #[Groups(["getCustomerDetails"])]
     private ?string $adress = null;
 
     public function update(?Customer $updateCustomer): self
