@@ -20,9 +20,12 @@ use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 #[Route('/api/users')]
 class CustomerController extends AbstractController
 {
-    #[Route('/{id}/customers', name: 'customers_list', methods: ['GET'])]
-    public function getCustomersList(User $user, CustomerRepository $customerRepository, SerializerInterface $serializer): JsonResponse
+    #[Route('/customers', name: 'customers_list', methods: ['GET'])]
+    public function getCustomersList(CustomerRepository $customerRepository, SerializerInterface $serializer): JsonResponse
     {
+        /** @var \App\Entity\User $user */
+        $user = $this->getUser();
+
         $customersList = $customerRepository->findUserCustomers($user);
 
         $context = (new SerializationContext())->setGroups(['getCustomers']);
@@ -31,30 +34,35 @@ class CustomerController extends AbstractController
         return new JsonResponse($jsonCustomersList, Response::HTTP_OK, [], true);
     }
 
-    #[Route('/{id}/customers/{customer_id}', name: 'customer_details', methods: ['GET'])] 
-    public function getCustomerDetails(#[MapEntity(id: 'id')] User $user, #[MapEntity(id: 'customer_id')] Customer $customer, SerializerInterface $serializer): JsonResponse
+    #[Route('/customers/{customer_id}', name: 'customer_details', methods: ['GET'])] 
+    public function getCustomerDetails(#[MapEntity(id: 'customer_id')] Customer $customer, SerializerInterface $serializer): JsonResponse
     {
-        // $customerDetails = $customerRepository->findUserCustomerDetails($user, $customer_id);
+        $this->denyAccessUnlessGranted('view', $customer);
+
         $context = (new SerializationContext())->setGroups(['getCustomerDetails']);
         $jsonCustomerDetails = $serializer->serialize($customer, 'json', $context);
 
         return new JsonResponse($jsonCustomerDetails, Response::HTTP_OK, [], true);
     }
 
-    #[Route('/{id}/customers/{customer_id}', name: 'delete_customer', methods: ['DELETE'])]
+    #[Route('/customers/{customer_id}', name: 'delete_customer', methods: ['DELETE'])]
     #[IsGranted('ROLE_ADMIN', message: 'Vous n\'avez pas les droits suffisants pour supprimer un de vos clients.')]
-    public function deleteCustomer(#[MapEntity(id: 'id')] User $user, #[MapEntity(id: 'customer_id')] Customer $customer, CustomerRepository $customerRepository): JsonResponse
+    public function deleteCustomer(#[MapEntity(id: 'customer_id')] Customer $customer, CustomerRepository $customerRepository): JsonResponse
     {
-        // $customerToDelete = $customerRepository->findUserCustomerDetails($user, $customer_id);
+        $this->denyAccessUnlessGranted('delete', $customer);
+
         $customerRepository->remove($customer, true);
 
         return new JsonResponse(null, Response::HTTP_NO_CONTENT);
     }
 
-    #[Route('/{id}/customers', name: 'create_customer', methods: ['POST'])]
+    #[Route('/customers', name: 'create_customer', methods: ['POST'])]
     #[IsGranted('ROLE_ADMIN', message: 'Vous n\'avez pas les droits suffisants pour créer un client.')]
-    public function createCustomer(User $user, Request $request, CustomerRepository $customerRepository, SerializerInterface $serializer, UrlGeneratorInterface $urlGenerator, ValidatorInterface $validator): JsonResponse
+    public function createCustomer(Request $request, CustomerRepository $customerRepository, SerializerInterface $serializer, UrlGeneratorInterface $urlGenerator, ValidatorInterface $validator): JsonResponse
     {
+        /** @var \App\Entity\User $user */
+        $user = $this->getUser();
+
         $customer = $serializer->deserialize($request->getContent(), Customer::class, 'json');
         $customer->setMarketPlace($user);
 
@@ -75,10 +83,12 @@ class CustomerController extends AbstractController
         return new JsonResponse($jsonCustomer, Response::HTTP_CREATED, ["Location" => $location], true);
     }
 
-    #[Route('/{id}/customers/{customer_id}', name: 'update_customer', methods: ['PUT'])] 
+    #[Route('/customers/{customer_id}', name: 'update_customer', methods: ['PUT'])] 
     #[IsGranted('ROLE_ADMIN', message: 'Vous n\'avez pas les droits suffisants pour mettre à jour un de vos clients.')]
-    public function updateCustomer(#[MapEntity(id: 'id')] User $user, #[MapEntity(id: 'customer_id')] Customer $currentCustomer, Request $request, CustomerRepository $customerRepository, SerializerInterface $serializer, UrlGeneratorInterface $urlGenerator, ValidatorInterface $validator): JsonResponse
+    public function updateCustomer(#[MapEntity(id: 'customer_id')] Customer $currentCustomer, Request $request, CustomerRepository $customerRepository, SerializerInterface $serializer, UrlGeneratorInterface $urlGenerator, ValidatorInterface $validator): JsonResponse
     {
+        $this->denyAccessUnlessGranted('edit', $currentCustomer);
+
         $updatedCustomer = $serializer->deserialize($request->getContent(), Customer::class, 'json');
        
         // We check the customer datas
