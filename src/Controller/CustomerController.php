@@ -10,8 +10,9 @@ use JMS\Serializer\SerializationContext;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
-use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Bridge\Doctrine\Attribute\MapEntity;
+use Symfony\Component\HttpFoundation\JsonResponse;
+use Symfony\Component\Security\Http\Attribute\IsGranted;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -41,6 +42,7 @@ class CustomerController extends AbstractController
     }
 
     #[Route('/{id}/customers/{customer_id}', name: 'delete_customer', methods: ['DELETE'])]
+    #[IsGranted('ROLE_ADMIN', message: 'Vous n\'avez pas les droits suffisants pour supprimer un de vos clients.')]
     public function deleteCustomer(#[MapEntity(id: 'id')] User $user, #[MapEntity(id: 'customer_id')] Customer $customer, CustomerRepository $customerRepository): JsonResponse
     {
         // $customerToDelete = $customerRepository->findUserCustomerDetails($user, $customer_id);
@@ -50,6 +52,7 @@ class CustomerController extends AbstractController
     }
 
     #[Route('/{id}/customers', name: 'create_customer', methods: ['POST'])]
+    #[IsGranted('ROLE_ADMIN', message: 'Vous n\'avez pas les droits suffisants pour créer un client.')]
     public function createCustomer(User $user, Request $request, CustomerRepository $customerRepository, SerializerInterface $serializer, UrlGeneratorInterface $urlGenerator, ValidatorInterface $validator): JsonResponse
     {
         $customer = $serializer->deserialize($request->getContent(), Customer::class, 'json');
@@ -73,6 +76,7 @@ class CustomerController extends AbstractController
     }
 
     #[Route('/{id}/customers/{customer_id}', name: 'update_customer', methods: ['PUT'])] 
+    #[IsGranted('ROLE_ADMIN', message: 'Vous n\'avez pas les droits suffisants pour mettre à jour un de vos clients.')]
     public function updateCustomer(#[MapEntity(id: 'id')] User $user, #[MapEntity(id: 'customer_id')] Customer $currentCustomer, Request $request, CustomerRepository $customerRepository, SerializerInterface $serializer, UrlGeneratorInterface $urlGenerator, ValidatorInterface $validator): JsonResponse
     {
         $updatedCustomer = $serializer->deserialize($request->getContent(), Customer::class, 'json');
