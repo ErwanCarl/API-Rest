@@ -10,6 +10,8 @@ use App\Repository\CustomerRepository;
 use Symfony\Component\Validator\Constraints as Assert;
 use Symfony\Bridge\Doctrine\Validator\Constraints\UniqueEntity;
 use Hateoas\Configuration\Annotation as Hateoas;
+use Nelmio\ApiDocBundle\Annotation\Model;
+use OpenApi\Annotations as OA;
 
 /**
  * @Hateoas\Relation(
@@ -41,15 +43,9 @@ use Hateoas\Configuration\Annotation as Hateoas;
  *
  */
 #[ORM\Entity(repositoryClass: CustomerRepository::class)]
+#[ORM\Table(name: 'customer')]
+#[ORM\UniqueConstraint(name: 'unique_email_marketplace_idx', columns: ['email', 'marketplace_id'])]
 #[UniqueEntity(fields: ["email", "marketplace"], message : 'L\'email est déjà utilisé par un autre client.')]
-// #[ORM\Table(
-//     uniqueConstraints: [
-//         #[UniqueConstraint(
-//             name: "unique_email_marketplace",
-//             columns: ['email', 'marketplace']
-//         )]
-//     ]
-// )]
 class Customer
 {
     #[ORM\Id]
@@ -87,7 +83,6 @@ class Customer
 
     #[ORM\ManyToOne(inversedBy: 'customers')]
     #[ORM\JoinColumn(nullable: false)]
-    #[Groups(["getCustomerDetails"])]
     private ?User $marketplace = null;
 
     #[ORM\Column(length: 255, nullable: true)]

@@ -4,7 +4,6 @@ namespace App\Entity;
 
 use Doctrine\ORM\Mapping as ORM;
 use App\Repository\UserRepository;
-use JMS\Serializer\Annotation\Groups;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\Common\Collections\ArrayCollection;
 use Symfony\Component\Validator\Constraints as Assert;
@@ -21,20 +20,17 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
-    #[Groups(["getCustomerDetails"])]
     private ?int $id = null;
 
     #[ORM\Column(length: 50, unique: true)]
     #[Assert\NotBlank(message: "Le libellé de la Market Place est obligatoire.")]
     #[Assert\Length(min: 2, max: 50, minMessage: "Le libellé de la Market Place doit faire au moins {{ limit }} caractères.", maxMessage: "Le libellé de la Market Place ne peut pas faire plus de {{ limit }} caractères.")]
-    #[Groups(["getCustomerDetails"])]
     private ?string $label = null;
 
     #[ORM\Column(length: 255, unique: true)]
     #[Assert\NotBlank(message: 'Le mail doit être renseigné.')]
     #[Assert\Email(message: 'Le format de l\'email n\'est pas valide.',)]
     #[Assert\Length(max: 255, maxMessage: "L'email ne peut pas faire plus de {{ limit }} caractères.")]
-    #[Groups(["getCustomerDetails"])]
     private ?string $email = null;
 
     #[ORM\Column(type: 'json')]
