@@ -2,24 +2,32 @@
 
 namespace App\Controller;
 
+use OA\ExternalLink;
 use App\Entity\Customer;
+use OA\ExternalDocumentation;
+use OpenApi\Annotations as OA;
+use OpenApi\Annotations\Example;
+use OpenApi\Annotations\OpenApi;
+use App\Service\PaginationHandler;
+use OpenApi\Annotations\MediaType;
 use App\Repository\CustomerRepository;
 use JMS\Serializer\SerializerInterface;
 use JMS\Serializer\SerializationContext;
+use Nelmio\ApiDocBundle\Annotation\Model;
 use Symfony\Contracts\Cache\ItemInterface;
+use Knp\Component\Pager\PaginatorInterface;
+use Nelmio\ApiDocBundle\Annotation\Security;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Bridge\Doctrine\Attribute\MapEntity;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Contracts\Cache\TagAwareCacheInterface;
+use Symfony\Component\Routing\Annotation\JsonContent;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
-use Nelmio\ApiDocBundle\Annotation\Model;
-use Nelmio\ApiDocBundle\Annotation\Security;
-use OpenApi\Annotations as OA;
 
 #[Route('/api/users')]
 class CustomerController extends AbstractController
@@ -53,6 +61,24 @@ class CustomerController extends AbstractController
      *        type="object"
      *     )
      * )
+     * @OA\Parameter(
+     *     name="page",
+     *     in="query",
+     *     required=false,
+     *     description="The page number to get back, page 1 is used by default if nothing is specified in the url query.",
+     *     @OA\Schema(type="integer")
+     * )
+     * @OA\Parameter(
+     *     name="limit",
+     *     in="query",
+     *     required=false,
+     *     description="The object number to get back, limit 50 is used by default if nothing is specified in the url query.",
+     *     @OA\Schema(type="integer")
+     * )
+     * @OA\ExternalDocumentation(
+     *     url="https://example.com/api/phones?page=1&limit=10",
+     *     description="Example request"
+     * )
      * @OA\Tag(name="Customers")
      *
      * @param CustomerRepository $customerRepository
@@ -61,22 +87,37 @@ class CustomerController extends AbstractController
      * @return JsonResponse
      */
     #[Route('/customers', name: 'customers_list', methods: ['GET'])]
-    public function getCustomersList(CustomerRepository $customerRepository, SerializerInterface $serializer, TagAwareCacheInterface $cachePool): JsonResponse
+    public function getCustomersList(CustomerRepository $customerRepository, SerializerInterface $serializer, TagAwareCacheInterface $cachePool, PaginatorInterface $paginator, Request $request, PaginationHandler $paginationHandler): JsonResponse
     {
         /** @var \App\Entity\User $user */
         $user = $this->getUser();
 
-        $idCache = "getAllCustomers-user-".$user->getId();
+        $page = $request->query->getInt('page',1);
+        $limit = $request->query->getInt('limit', 50);
+        $idCache = "getAllCustomers-user".$user->getId()."-P".$page."-L".$limit;
         echo($idCache); 
-        $jsonCustomersList = $cachePool->get($idCache, function (ItemInterface $item) use ($customerRepository, $user, $serializer) {
+
+        $knpCustomersList = $cachePool->get($idCache, function (ItemInterface $item) use ($customerRepository, $user, $paginator, $request) {
             // ligne pour tester only, à enlever après
             echo("Recherche pas encore en cache");
             $item->tag("customersCache");
 
-            $customersList = $customerRepository->findUserCustomers($user);
-            $context = (new SerializationContext())->setGroups(['getCustomerDetails']);
-            return $serializer->serialize($customersList, 'json', $context);
+            $customersList = $paginator->paginate(
+                $customerRepository->findUserCustomers($user),
+                $request->query->getInt('page', 1),
+                $request->query->getInt('limit', 50)
+            );
+            return $customersList;
         });
+        // dd($knpCustomersList);
+        $context = (new SerializationContext())->setGroups(['getCustomerDetails']);
+        $jsonCustomersList = $serializer->serialize($knpCustomersList->getItems(), 'json', $context);
+
+        $customerNumberGet = count($knpCustomersList->getItems());
+        $customersArray = $customerRepository->findUserCustomers($user);
+        $customersUserNumber = count($customersArray);
+
+        $paginationHandler->isCustomerPageEmpty($customerNumberGet, $customersUserNumber, $page, $limit);
 
         return new JsonResponse($jsonCustomersList, Response::HTTP_OK, [], true);
     }
@@ -277,6 +318,21 @@ class CustomerController extends AbstractController
      *        type="object"
      *     )
      * )
+     * @OA\RequestBody(
+     *     request="Customer",
+     *     required=true,
+     *     description="JSON object containing customer data",
+     *     @MediaType(
+     *         mediaType="application/json",
+     *         @OA\Schema(
+     *             @OA\Property(property="name", type="string", example="John", required={"name"}),
+     *             @OA\Property(property="nickname", type="string", example="Doe", required={"nickname"}),
+     *             @OA\Property(property="email", type="string", format="email", example="johndoe@example.com", required={"email"}),
+     *             @OA\Property(property="adress", type="string", example="123 Main Street")
+     *         ),
+     *         example={"name": "John", "nickname": "Doe", "email": "johndoe@example.com", "adress": "123 Main Street"}
+     *     )
+     * )
      * @OA\Tag(name="Customers")
      *
      * @param Request $request
@@ -365,6 +421,21 @@ class CustomerController extends AbstractController
      *     description="The customer identifier",
      *     required=true,
      *     @OA\Schema(type="integer")
+     * )
+     * @OA\RequestBody(
+     *     request="Customer",
+     *     required=true,
+     *     description="JSON object containing customer data",
+     *     @MediaType(
+     *         mediaType="application/json",
+     *         @OA\Schema(
+     *             @OA\Property(property="name", type="string", example="John", required={"name"}),
+     *             @OA\Property(property="nickname", type="string", example="Doe", required={"nickname"}),
+     *             @OA\Property(property="email", type="string", format="email", example="johndoe@example.com", required={"email"}),
+     *             @OA\Property(property="adress", type="string", example="123 Main Street")
+     *         ),
+     *         example={"name": "John", "nickname": "Doe", "email": "johndoe@example.com", "adress": "123 Main Street"}
+     *     )
      * )
      * @OA\Tag(name="Customers")
      *
