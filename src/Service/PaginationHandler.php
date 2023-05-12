@@ -7,7 +7,7 @@ use JMS\Serializer\Serializer;
 
 class PaginationHandler {
 
-    public function isPhonePageEmpty(int $phones, int $numberOfObject, int $page, int $limit) 
+    public function isPhonePageEmpty(int $phones, int $numberOfObject, int $page, int $limit) : void
     {
         $phoneStartNumber = ($page - 1) * $limit + 1;
         $totalPages = ceil($numberOfObject / $limit);
@@ -17,7 +17,7 @@ class PaginationHandler {
         }    
     }
 
-    public function isCustomerPageEmpty(int $customers, int $numberOfObject, int $page, int $limit) 
+    public function isCustomerPageEmpty(int $customers, int $numberOfObject, int $page, int $limit) : void
     {
         $customerStartNumber = ($page - 1) * $limit + 1;
         $totalPages = ceil($numberOfObject / $limit);

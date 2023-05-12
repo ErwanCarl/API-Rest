@@ -95,11 +95,9 @@ class CustomerController extends AbstractController
         $page = $request->query->getInt('page',1);
         $limit = $request->query->getInt('limit', 50);
         $idCache = "getAllCustomers-user".$user->getId()."-P".$page."-L".$limit;
-        echo($idCache); 
 
         $knpCustomersList = $cachePool->get($idCache, function (ItemInterface $item) use ($customerRepository, $user, $paginator, $request) {
-            // ligne pour tester only, à enlever après
-            echo("Recherche pas encore en cache");
+           
             $item->tag("customersCache");
 
             $customersList = $paginator->paginate(
@@ -109,7 +107,6 @@ class CustomerController extends AbstractController
             );
             return $customersList;
         });
-        // dd($knpCustomersList);
         $context = (new SerializationContext())->setGroups(['getCustomerDetails']);
         $jsonCustomersList = $serializer->serialize($knpCustomersList->getItems(), 'json', $context);
 
@@ -189,11 +186,8 @@ class CustomerController extends AbstractController
         $this->denyAccessUnlessGranted('view', $customer);
 
         $idCache = "getCustomerDetails-".$customer->getId();
-        echo($idCache); 
 
         $jsonCustomerDetails = $cachePool->get($idCache, function (ItemInterface $item) use ($customer, $serializer) {
-            // ligne pour tester only, à enlever après
-            echo("Recherche pas encore en cache");
             $item->tag("customersCache-".$customer->getId());
             $context = (new SerializationContext())->setGroups(['getCustomerDetails']);
             return $serializer->serialize($customer, 'json', $context);
