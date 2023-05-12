@@ -82,12 +82,11 @@ class PhoneController extends AbstractController
         $page = $request->query->getInt('page',1);
         $limit = $request->query->getInt('limit', 20);
         $idCache = "getAllPhones-P".$page."-L".$limit;
-        echo($idCache);
 
         $knpPhonesList = $cachePool->get($idCache, function (ItemInterface $item) use ($phoneRepository, $paginator, $request) {
-            // ligne pour tester only, à enlever après
-            echo("Recherche pas encore en cache");
+            echo('tes');
             $item->tag("phonesCache");
+            $item->expiresAfter(60);
             $phonesList = $paginator->paginate(
                 $phoneRepository->findAll(),
                 $request->query->getInt('page', 1),
@@ -96,7 +95,6 @@ class PhoneController extends AbstractController
             
             return $phonesList;
         });
-        // dd($knpPhonesList);
         $jsonPhonesList = $serializer->serialize($knpPhonesList->getItems(), 'json');
 
         $phoneNumberGet = count($knpPhonesList->getItems());
@@ -161,11 +159,10 @@ class PhoneController extends AbstractController
     public function getPhoneDetails(Phone $phone, SerializerInterface $serializer, TagAwareCacheInterface $cachePool): JsonResponse
     {
         $idCache = "getPhoneDetails-".$phone->getId();
-        echo($idCache);
         $jsonPhoneDetail = $cachePool->get($idCache, function (ItemInterface $item) use ($phone, $serializer) {
-            // ligne pour tester only, à enlever après
-            echo("Recherche pas encore en cache");
+            echo('tes');
             $item->tag("phonesCache-".$phone->getId());
+            $item->expiresAfter(60);
             return $serializer->serialize($phone, 'json');
         });
 
