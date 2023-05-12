@@ -3,17 +3,21 @@
 namespace App\Controller;
 
 use App\Entity\Phone;
+use OA\ExternalDocumentation;
+use OpenApi\Annotations as OA;
+use App\Service\PaginationHandler;
 use App\Repository\PhoneRepository;
 use JMS\Serializer\SerializerInterface;
+use Nelmio\ApiDocBundle\Annotation\Model;
 use Symfony\Contracts\Cache\ItemInterface;
+use Knp\Component\Pager\PaginatorInterface;
+use Nelmio\ApiDocBundle\Annotation\Security;
+use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Contracts\Cache\TagAwareCacheInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
-use Nelmio\ApiDocBundle\Annotation\Model;
-use Nelmio\ApiDocBundle\Annotation\Security;
-use OpenApi\Annotations as OA;
 
 #[Route('/api')]
 class PhoneController extends AbstractController
@@ -47,6 +51,24 @@ class PhoneController extends AbstractController
      *        type="object"
      *     )
      * )
+     * @OA\Parameter(
+     *     name="page",
+     *     in="query",
+     *     required=false,
+     *     description="The page number to get back, page 1 is used by default if nothing is specified in the url query.",
+     *     @OA\Schema(type="integer")
+     * )
+     * @OA\Parameter(
+     *     name="limit",
+     *     in="query",
+     *     required=false,
+     *     description="The object number to get back, limit 20 is used by default if nothing is specified in the url query.",
+     *     @OA\Schema(type="integer")
+     * )
+     * @OA\ExternalDocumentation(
+     *     url="https://example.com/api/customers?page=1&limit=10",
+     *     description="Example request"
+     * )
      * @OA\Tag(name="Phones")
      * 
      * @param PhoneRepository $phoneRepository
@@ -55,17 +77,30 @@ class PhoneController extends AbstractController
      * @return JsonResponse
      */
     #[Route('/phones', name: 'phones_list', methods: ['GET'])]
-    public function getPhonesList(PhoneRepository $phoneRepository, SerializerInterface $serializer, TagAwareCacheInterface $cachePool): JsonResponse
+    public function getPhonesList(PhoneRepository $phoneRepository, SerializerInterface $serializer, TagAwareCacheInterface $cachePool, PaginatorInterface $paginator, Request $request, PaginationHandler $paginationHandler): JsonResponse
     {
-        $idCache = "getAllPhones";
+        $page = $request->query->getInt('page',1);
+        $limit = $request->query->getInt('limit', 20);
+        $idCache = "getAllPhones-P".$page."-L".$limit;
         echo($idCache);
-        $jsonPhonesList = $cachePool->get($idCache, function (ItemInterface $item) use ($phoneRepository, $serializer) {
+
+        $knpPhonesList = $cachePool->get($idCache, function (ItemInterface $item) use ($phoneRepository, $paginator, $request) {
             // ligne pour tester only, à enlever après
             echo("Recherche pas encore en cache");
             $item->tag("phonesCache");
-            $phonesList = $phoneRepository->findAll();
-            return $serializer->serialize($phonesList, 'json');
+            $phonesList = $paginator->paginate(
+                $phoneRepository->findAll(),
+                $request->query->getInt('page', 1),
+                $request->query->getInt('limit', 20)
+            );
+            
+            return $phonesList;
         });
+        // dd($knpPhonesList);
+        $jsonPhonesList = $serializer->serialize($knpPhonesList->getItems(), 'json');
+
+        $phoneNumberGet = count($knpPhonesList->getItems());
+        $paginationHandler->isPhonePageEmpty($phoneNumberGet, $phoneRepository->count([]), $page, $limit);
 
         return new JsonResponse($jsonPhonesList, Response::HTTP_OK, [], true);
     }

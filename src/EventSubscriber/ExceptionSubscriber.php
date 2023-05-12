@@ -2,6 +2,7 @@
 
 namespace App\EventSubscriber;
 
+use Exception;
 use Symfony\Component\HttpKernel\KernelEvents;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\RequestStack;
@@ -21,9 +22,22 @@ class ExceptionSubscriber implements EventSubscriberInterface
     {
         $exception = $event->getThrowable();
 
-        $id = ctype_digit($this->requestStack->getCurrentRequest()->get('id'));
+        if(($this->requestStack->getCurrentRequest()->get('customer_id')) !== null) {
+            $customerId = ctype_digit($this->requestStack->getCurrentRequest()->get('customer_id'));
+        }
+
+        if(($this->requestStack->getCurrentRequest()->get('id')) !== null) {
+            $phoneId = ctype_digit($this->requestStack->getCurrentRequest()->get('id'));
+        }
     
-        if ($exception instanceof NotFoundHttpException && $id !== true && !($exception->getPrevious() instanceof ResourceNotFoundException)) {
+        if (isset($customerId) && $exception instanceof NotFoundHttpException && $customerId !== true && !($exception->getPrevious() instanceof ResourceNotFoundException)) {
+            $data = [
+                'status' => 400,
+                'message' => "Le paramètre 'customer_id' n'accepte que les chiffres."
+            ];
+            $event->setResponse(new JsonResponse($data, 400));
+
+        } elseif (isset($phoneId) && $exception instanceof NotFoundHttpException && $phoneId !== true && !($exception->getPrevious() instanceof ResourceNotFoundException)) {
             $data = [
                 'status' => 400,
                 'message' => "Le paramètre 'id' n'accepte que les chiffres."
@@ -51,6 +65,13 @@ class ExceptionSubscriber implements EventSubscriberInterface
             ];
             $event->setResponse(new JsonResponse($data));
 
+        } elseif ($exception instanceof Exception && ($exception->getCode() === 666 || $exception->getCode() === 999)) {
+            $data = [
+                'status' => 404,
+                'message' => $exception->getMessage()
+            ];
+            $event->setResponse(new JsonResponse($data, 404));
+        
         } else {
             $data = [
                 'status' => 500, 
