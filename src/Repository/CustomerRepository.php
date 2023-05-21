@@ -47,7 +47,7 @@ class CustomerRepository extends ServiceEntityRepository
             ->setParameter('user', $user)
             ->orderBy('c.id','ASC')
             ->getQuery()
-            ->getArrayResult();
+            ->getResult();
     }
 
     public function findUserCustomerDetails(User $user, int $id) : ?Customer 
