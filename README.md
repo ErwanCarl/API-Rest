@@ -1,6 +1,7 @@
 # P7 Openclassrooms - API Rest - Erwan Carlini
 
-<!-- [![SymfonyInsight](https://insight.symfony.com/projects/00c7f3e9-6c00-46bf-be2e-77835a3f9bd7/big.svg)](https://insight.symfony.com/projects/00c7f3e9-6c00-46bf-be2e-77835a3f9bd7) -->
+[![SymfonyInsight](https://insight.symfony.com/projects/c7ba37ee-c1bc-4170-9450-569f3d8d0fcc/big.svg)](https://insight.symfony.com/projects/c7ba37ee-c1bc-4170-9450-569f3d8d0fcc)
+
 ---------------
 
 ## Starting project
