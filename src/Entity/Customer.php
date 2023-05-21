@@ -3,15 +3,16 @@
 namespace App\Entity;
 
 use ORM\Table;
+use OA\Property;
 use ORM\UniqueConstraint;
+use OpenApi\Annotations as OA;
 use Doctrine\ORM\Mapping as ORM;
 use JMS\Serializer\Annotation\Groups;
 use App\Repository\CustomerRepository;
+use Nelmio\ApiDocBundle\Annotation\Model;
+use Hateoas\Configuration\Annotation as Hateoas;
 use Symfony\Component\Validator\Constraints as Assert;
 use Symfony\Bridge\Doctrine\Validator\Constraints\UniqueEntity;
-use Hateoas\Configuration\Annotation as Hateoas;
-use Nelmio\ApiDocBundle\Annotation\Model;
-use OpenApi\Annotations as OA;
 
 /**
  * @Hateoas\Relation(
@@ -27,7 +28,7 @@ use OpenApi\Annotations as OA;
  *      "delete",
  *      href = @Hateoas\Route(
  *          "delete_customer",
- *          parameters = { "customer_id" = "expr(object.getId())" },
+ *          parameters = { "customer_id" = "expr(object.getId())" }
  *      ),
  *      exclusion = @Hateoas\Exclusion(groups="getCustomerDetails", excludeIf = "expr(not is_granted('ROLE_ADMIN'))")
  * )
@@ -36,7 +37,7 @@ use OpenApi\Annotations as OA;
  *      "update",
  *      href = @Hateoas\Route(
  *          "update_customer",
- *          parameters = { "customer_id" = "expr(object.getId())" },
+ *          parameters = { "customer_id" = "expr(object.getId())" }
  *      ),
  *      exclusion = @Hateoas\Exclusion(groups="getCustomerDetails", excludeIf = "expr(not is_granted('ROLE_ADMIN'))")
  * )
@@ -54,6 +55,14 @@ class Customer
     #[Groups(["getCustomerDetails"])]
     private ?int $id = null;
 
+    /**
+     * @OA\Property(
+     *     property="name",
+     *     type="string",
+     *     example="string"
+     * )
+     * 
+     */
     #[ORM\Column(length: 50)]
     #[Assert\NotBlank(message: "Le nom du client est obligatoire.")]
     #[Assert\Length(min: 2, max: 50, minMessage: "Le nom de l'utilisateur doit faire au moins {{ limit }} caractères.", maxMessage: "Le nom de l'utilisateur ne peut pas faire plus de {{ limit }} caractères.")]
@@ -64,6 +73,14 @@ class Customer
     #[Groups(["getCustomerDetails"])]
     private ?string $name = null;
 
+    /**
+     * @OA\Property(
+     *     property="nickname",
+     *     type="string",
+     *     example="string"
+     * )
+     * 
+     */
     #[ORM\Column(length: 50)]
     #[Assert\NotBlank(message: "Le prénom du client est obligatoire.")]
     #[Assert\Length(min: 2, max: 50, minMessage: "Le prénom de l'utilisateur doit faire au moins {{ limit }} caractères.", maxMessage: "Le prénom de l'utilisateur ne peut pas faire plus de {{ limit }} caractères.")]

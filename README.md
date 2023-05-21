@@ -53,13 +53,9 @@ You can access to the full detailled documentation by simply adding at the end o
 
 ## Libraries list
 
-* Symfony  
-* Doctrine  
-* Twig 
 * JMS serializer
 * LekixJWT
 * Knp Paginator
 * Willdurand Hateoas bundle
 * Faker
 * Nelmio 
-* Security

@@ -84,9 +84,8 @@ class PhoneController extends AbstractController
         $idCache = "getAllPhones-P".$page."-L".$limit;
 
         $knpPhonesList = $cachePool->get($idCache, function (ItemInterface $item) use ($phoneRepository, $paginator, $request) {
-            echo('tes');
             $item->tag("phonesCache");
-            $item->expiresAfter(60);
+            $item->expiresAfter(3600);
             $phonesList = $paginator->paginate(
                 $phoneRepository->findAll(),
                 $request->query->getInt('page', 1),
@@ -160,9 +159,8 @@ class PhoneController extends AbstractController
     {
         $idCache = "getPhoneDetails-".$phone->getId();
         $jsonPhoneDetail = $cachePool->get($idCache, function (ItemInterface $item) use ($phone, $serializer) {
-            echo('tes');
             $item->tag("phonesCache-".$phone->getId());
-            $item->expiresAfter(60);
+            $item->expiresAfter(3600);
             return $serializer->serialize($phone, 'json');
         });
 
