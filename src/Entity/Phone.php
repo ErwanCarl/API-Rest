@@ -61,7 +61,7 @@ class Phone
 
     #[ORM\Column]
     #[Assert\NotBlank(message: "La disponibilité du téléphone est obligatoire.")]
-    private ?bool $isAvailable = null;
+    private ?bool $isAvailable = true;
 
     public function getId(): ?int
     {
