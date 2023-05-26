@@ -360,7 +360,7 @@ class CustomerController extends AbstractController
         $context = (new SerializationContext())->setGroups(['getCustomerDetails']);
         $jsonCustomer = $serializer->serialize($customer, 'json', $context);
 
-        $location = $urlGenerator->generate('customer_details', ['id' => $customer->getMarketplace()->getId(), 'customer_id' => $customer->getId()], UrlGeneratorInterface::ABSOLUTE_URL);
+        $location = $urlGenerator->generate('customer_details', ['customer_id' => $customer->getId()], UrlGeneratorInterface::ABSOLUTE_URL);
 
         return new JsonResponse($jsonCustomer, Response::HTTP_CREATED, ["Location" => $location], true);
     }
@@ -461,8 +461,11 @@ class CustomerController extends AbstractController
 
         $customerRepository->save($currentCustomer, true);
 
-        $location = $urlGenerator->generate('customer_details', ['id' => $currentCustomer->getMarketplace()->getId(), 'customer_id' => $currentCustomer->getId()], UrlGeneratorInterface::ABSOLUTE_URL);
+        $context = (new SerializationContext())->setGroups(['getCustomerDetails']);
+        $jsonCustomer = $serializer->serialize($currentCustomer, 'json', $context);
 
-        return new JsonResponse(null, Response::HTTP_NO_CONTENT, ["Location" => $location]);
+        $location = $urlGenerator->generate('customer_details', ['customer_id' => $currentCustomer->getId()], UrlGeneratorInterface::ABSOLUTE_URL);
+
+        return new JsonResponse($jsonCustomer, Response::HTTP_OK, ["Location" => $location], true);
     }
 }
